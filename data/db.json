@@ -1,0 +1,182 @@
+{
+  "users": [
+    {
+      "id": "u-admin-1",
+      "name": "System Administrator",
+      "email": "admin@feedbackapp.com",
+      "password": "$2b$10$47ZP.PA1cQWF4gOFtfCkAeID.3.d0eaxPdVod6Qc6FTd5l9Coqgw6",
+      "role": "admin",
+      "createdAt": "2026-10-24T05:13:17.264Z"
+    },
+    {
+      "id": "u-user-1",
+      "name": "Jane Doe",
+      "email": "user@feedbackapp.com",
+      "password": "$2b$10$XZy6pPuf7tpIJd6gfMEbueC2Sx9EmWsw4qcgD/t0Mem.Y/TKOgWa.",
+      "role": "user",
+      "createdAt": "2026-11-08T05:13:17.265Z"
+    },
+    {
+      "id": "u-user-2",
+      "name": "John Smith",
+      "email": "john@example.com",
+      "password": "$2b$10$bDPCgnE6xcVTpHyuKOVlB.Xp04G4.D6Co4ukz0WNK4Wn6GQc705n2",
+      "role": "user",
+      "createdAt": "2026-11-16T05:13:17.265Z"
+    },
+    {
+      "id": "u-1b9a0695",
+      "name": "Sam Wilson",
+      "email": "testuser_1795410815964@example.com",
+      "password": "$2b$10$f9zyBBByD/EigUV7L0fZ8.Lh9D5P9vVXLiCfAq5p6E5X91.C/wpum",
+      "role": "user",
+      "createdAt": "2026-11-23T05:13:36.034Z"
+    },
+    {
+      "id": "u-18be32e1",
+      "name": "Sam Wilson",
+      "email": "testuser_1795411014383@example.com",
+      "password": "$2b$10$aoKyUoN6efzjIqUR8BgU8.f3hhBUZLmvtI.LOq5sNSjcxKPM8xJtC",
+      "role": "user",
+      "createdAt": "2026-11-23T05:16:54.454Z"
+    },
+    {
+      "id": "u-0372070c",
+      "name": "Sam Wilson",
+      "email": "testuser_1795413316907@example.com",
+      "password": "$2b$10$LUHNKNbQavnDhyhdqSZhkOUN0h/Ux1wPrt6DHr.WfkmI/xaNbJ2Mm",
+      "role": "user",
+      "createdAt": "2026-11-23T05:55:16.989Z"
+    },
+    {
+      "id": "u-5a83891c",
+      "name": "Sam Wilson",
+      "email": "testuser_1795415957972@example.com",
+      "password": "$2b$10$8hXY7Jr/nfFlYU/Clpa4/eGUk..JdMr5FFC/6MSSYGJV3rTETHNmG",
+      "role": "user",
+      "createdAt": "2026-11-23T06:39:18.062Z"
+    }
+  ],
+  "feedbacks": [
+    {
+      "id": "fb-171707a7",
+      "userId": "u-5a83891c",
+      "userName": "Sam Wilson",
+      "userEmail": "testuser_1795415957972@example.com",
+      "title": "Real-time collaborative editing with live cursors",
+      "category": "Feature Request",
+      "rating": 4,
+      "comments": "Updated: Live cursors and instant sync would be incredible.",
+      "priority": "High",
+      "status": "Resolved",
+      "adminResponse": "We released collaborative cursors in v2.0! Thanks Sam.",
+      "createdAt": "2026-11-23T06:39:18.103Z",
+      "updatedAt": "2026-11-23T06:39:18.172Z"
+    },
+    {
+      "id": "fb-d4728699",
+      "userId": "u-0372070c",
+      "userName": "Sam Wilson",
+      "userEmail": "testuser_1795413316907@example.com",
+      "title": "Real-time collaborative editing with live cursors",
+      "category": "Feature Request",
+      "rating": 4,
+      "comments": "Updated: Live cursors and instant sync would be incredible.",
+      "priority": "High",
+      "status": "Resolved",
+      "adminResponse": "We released collaborative cursors in v2.0! Thanks Sam.",
+      "createdAt": "2026-11-23T05:55:17.005Z",
+      "updatedAt": "2026-11-23T05:55:17.041Z"
+    },
+    {
+      "id": "fb-ecd4f1bb",
+      "userId": "u-18be32e1",
+      "userName": "Sam Wilson",
+      "userEmail": "testuser_1795411014383@example.com",
+      "title": "Real-time collaborative editing with live cursors",
+      "category": "Feature Request",
+      "rating": 4,
+      "comments": "Updated: Live cursors and instant sync would be incredible.",
+      "priority": "High",
+      "status": "Resolved",
+      "adminResponse": "We released collaborative cursors in v2.0! Thanks Sam.",
+      "createdAt": "2026-11-23T05:16:54.475Z",
+      "updatedAt": "2026-11-23T05:16:54.522Z"
+    },
+    {
+      "id": "fb-ac6d6be7",
+      "userId": "u-1b9a0695",
+      "userName": "Sam Wilson",
+      "userEmail": "testuser_1795410815964@example.com",
+      "title": "Real-time collaborative editing with live cursors",
+      "category": "Feature Request",
+      "rating": 4,
+      "comments": "Updated: Live cursors and instant sync would be incredible.",
+      "priority": "High",
+      "status": "Resolved",
+      "adminResponse": "We released collaborative cursors in v2.0! Thanks Sam.",
+      "createdAt": "2026-11-23T05:13:36.058Z",
+      "updatedAt": "2026-11-23T05:13:36.097Z"
+    },
+    {
+      "id": "fb-1",
+      "userId": "u-user-1",
+      "userName": "Jane Doe",
+      "userEmail": "user@feedbackapp.com",
+      "title": "Provide Dark Mode in Dashboard",
+      "category": "Feature Request",
+      "rating": 5,
+      "comments": "I love using the application at night, but the bright white background strains my eyes. A dark mode option would make this 10x better!",
+      "priority": "Medium",
+      "status": "In Review",
+      "adminResponse": "Thank you for the suggestion! Our design team is currently creating mockups for dark mode.",
+      "createdAt": "2026-11-18T05:13:17.265Z",
+      "updatedAt": "2026-11-21T05:13:17.265Z"
+    },
+    {
+      "id": "fb-2",
+      "userId": "u-user-1",
+      "userName": "Jane Doe",
+      "userEmail": "user@feedbackapp.com",
+      "title": "Notification Bell Alignment on Mobile",
+      "category": "Bug Report",
+      "rating": 3,
+      "comments": "On iPhone Safari, the notification icon overlaps slightly with the profile avatar in viewport widths below 380px.",
+      "priority": "High",
+      "status": "Resolved",
+      "adminResponse": "Fixed in version 1.2.4 patch. Header CSS flex-wrap corrected.",
+      "createdAt": "2026-11-13T05:13:17.265Z",
+      "updatedAt": "2026-11-22T05:13:17.265Z"
+    },
+    {
+      "id": "fb-3",
+      "userId": "u-user-2",
+      "userName": "John Smith",
+      "userEmail": "john@example.com",
+      "title": "Export Feedbacks to CSV / Excel",
+      "category": "Feature Request",
+      "rating": 4,
+      "comments": "It would be super helpful for report generation if we could download our feedback history as a spreadsheet or CSV.",
+      "priority": "Low",
+      "status": "Pending",
+      "adminResponse": "",
+      "createdAt": "2026-11-20T05:13:17.265Z",
+      "updatedAt": "2026-11-20T05:13:17.265Z"
+    },
+    {
+      "id": "fb-4",
+      "userId": "u-user-2",
+      "userName": "John Smith",
+      "userEmail": "john@example.com",
+      "title": "Great customer support turnaround!",
+      "category": "General Feedback",
+      "rating": 5,
+      "comments": "Submitted an inquiry yesterday and received a helpful reply in under an hour. Keep up the great work!",
+      "priority": "Low",
+      "status": "Resolved",
+      "adminResponse": "We appreciate the kind words! Passing this along to our support team.",
+      "createdAt": "2026-11-17T05:13:17.265Z",
+      "updatedAt": "2026-11-19T05:13:17.265Z"
+    }
+  ]
+}

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Dashboard - FeedbackApp</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="navbar-container"></div>
+
+  <main class="container">
+    <!-- Header with Welcome & Quick Action -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+      <div>
+        <h1 style="font-size: 2rem; font-weight: 800; letter-spacing: -0.02em;">
+          Feedback Portal
+        </h1>
+        <p style="color: var(--text-muted); font-size: 1rem;">
+          Welcome back, <span id="user-display-name" style="font-weight: 600; color: var(--text-main);">User</span>. View, edit, or submit new feedback.
+        </p>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem;">
+        <button id="btn-open-submit" class="btn btn-primary" onclick="openAddFeedbackModal()">
+          <span>➕</span> Add New Feedback
+        </button>
+      </div>
+    </div>
+
+    <!-- Status Banner for User (Addresses Requirement 3) -->
+    <div id="user-status-banner" style="margin-bottom: 2rem;"></div>
+
+    <!-- Feedback List / Cards View -->
+    <div id="feedbacks-container">
+      <div style="text-align:center; padding: 3rem 0; color: var(--text-muted);">
+        Loading your feedbacks...
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal: Add / Edit Feedback -->
+  <div id="feedback-modal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title" class="modal-title">Provide Feedback</h2>
+        <button type="button" class="modal-close" onclick="closeFeedbackModal()">&times;</button>
+      </div>
+
+      <form id="feedback-form">
+        <div class="modal-body">
+          <input type="hidden" id="feedback-id">
+
+          <div class="form-group">
+            <label class="form-label" for="fb-title">Title / Summary *</label>
+            <input type="text" id="fb-title" class="form-control" placeholder="e.g. Feedback by Aditya Shinde: Add dark mode toggle in navbar" required>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label" for="fb-category">Category *</label>
+              <select id="fb-category" class="form-select" required>
+                <option value="Feature Request">Feature Request</option>
+                <option value="Bug Report">Bug Report</option>
+                <option value="Improvement">Improvement</option>
+                <option value="General Feedback">General Feedback</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="fb-priority">Urgency / Priority</label>
+              <select id="fb-priority" class="form-select">
+                <option value="Low">Low</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="High">High</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Your Rating *</label>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <div id="interactive-star-rating" class="star-rating">
+                <span class="star" data-rating="1">★</span>
+                <span class="star" data-rating="2">★</span>
+                <span class="star" data-rating="3">★</span>
+                <span class="star" data-rating="4">★</span>
+                <span class="star" data-rating="5">★</span>
+              </div>
+              <span id="rating-label" style="font-weight: 600; font-size: 0.9rem; color: var(--text-muted);">
+                5 - Excellent
+              </span>
+              <input type="hidden" id="fb-rating" value="5">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="fb-comments">Detailed Description / Comments *</label>
+            <textarea id="fb-comments" class="form-control" rows="4" placeholder="Detailed feedback by Aditya Shinde: Describe your experience, what happened, or how this feature would help you..." required></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeFeedbackModal()">Cancel</button>
+          <button type="submit" id="btn-modal-save" class="btn btn-primary">Submit Feedback</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container" style="padding-top:0; padding-bottom:0;">
+      FeedbackApp &copy; 2026. Step 3: Edit / Add feedback portal.
+    </div>
+  </footer>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/user-dashboard.js"></script>
+</body>
+</html>

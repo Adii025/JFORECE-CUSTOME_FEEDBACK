@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FeedbackApp - Customer Feedback Management</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="navbar-container"></div>
+
+  <main class="container">
+    <!-- Hero / Summary Section -->
+    <div style="text-align: center; max-width: 860px; margin: 2rem auto 3.5rem;">
+      <span class="badge badge-in-review" style="margin-bottom: 1rem; font-size: 0.9rem; padding: 0.4rem 1rem;">✨ Complete 4-Step Feedback System</span>
+      <h1 style="font-size: 2.75rem; font-weight: 800; line-height: 1.2; letter-spacing: -0.03em; margin-bottom: 1.25rem;">
+        Collect, Edit, & Manage User Feedback Effortlessly
+      </h1>
+      <p style="font-size: 1.2rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 2rem;">
+        A comprehensive platform where users can provide feedback, view and edit their previous submissions, and administrators can perform full CRUD operations on all user inputs.
+      </p>
+      
+      <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        <a href="/login.html" class="btn btn-primary btn-lg">User Login & Provide Feedback →</a>
+        <a href="/register.html" class="btn btn-secondary btn-lg">Create New Account</a>
+        <a href="/admin.html" class="btn btn-outline-primary btn-lg">Admin Dashboard ⚡</a>
+      </div>
+    </div>
+
+    <!-- Quick Credentials / Demo Testing Box -->
+    <div class="card" style="background: linear-gradient(to right, #f8fafc, #eff6ff); border: 2px dashed #bfdbfe; margin-bottom: 3.5rem;">
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1.5rem;">
+        <div>
+          <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span>🔑</span> Ready-to-Test Demo Accounts
+          </h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">
+            Instantly test the application using these seeded accounts, or register a new one.
+          </p>
+        </div>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+          <div style="background: #ffffff; padding: 0.75rem 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); font-size: 0.85rem;">
+            <div style="font-weight: 700; color: var(--primary);">👤 Standard User (Jane Doe)</div>
+            <div><strong>Email:</strong> user@feedbackapp.com</div>
+            <div><strong>Password:</strong> User@123</div>
+          </div>
+          <div style="background: #ffffff; padding: 0.75rem 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); font-size: 0.85rem;">
+            <div style="font-weight: 700; color: #db2777;">🛡️ Administrator</div>
+            <div><strong>Email:</strong> admin@feedbackapp.com</div>
+            <div><strong>Password:</strong> Admin@123</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- The 4 Core Steps Breakdown -->
+    <div style="margin-bottom: 3.5rem;">
+      <div style="text-align: center; margin-bottom: 2.5rem;">
+        <h2 style="font-size: 2rem; font-weight: 800; letter-spacing: -0.02em;">4-Step Feature Architecture</h2>
+        <p style="color: var(--text-muted); font-size: 1.05rem;">Meeting all specifications of the feedback workflow</p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.75rem;">
+        <!-- Step 1 -->
+        <div class="card card-hover">
+          <div style="font-size: 2rem; margin-bottom: 1rem; color: var(--primary);">1️⃣</div>
+          <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.75rem;">Summary & User Login</h3>
+          <p style="color: var(--text-muted); font-size: 0.925rem; line-height: 1.6; margin-bottom: 1.25rem;">
+            Secure token/cookie-based login for users and administrators. Instant authentication with role-based routing and session protection.
+          </p>
+          <a href="/login.html" class="btn btn-outline-primary btn-sm">Go to Login →</a>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="card card-hover">
+          <div style="font-size: 2rem; margin-bottom: 1rem; color: var(--secondary);">2️⃣</div>
+          <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.75rem;">Registration Page</h3>
+          <p style="color: var(--text-muted); font-size: 0.925rem; line-height: 1.6; margin-bottom: 1.25rem;">
+            Intuitive registration form with real-time validation, password hashing via bcrypt, and instant account onboarding for users and admins.
+          </p>
+          <a href="/register.html" class="btn btn-outline-primary btn-sm">Create Account →</a>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="card card-hover">
+          <div style="font-size: 2rem; margin-bottom: 1rem; color: var(--warning);">3️⃣</div>
+          <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.75rem;">Edit / Add Feedback</h3>
+          <p style="color: var(--text-muted); font-size: 0.925rem; line-height: 1.6; margin-bottom: 1.25rem;">
+            Users can see previously submitted feedback with status tags, or submit a new feedback if not submitted yet. Previously submitted feedback can be edited directly anytime.
+          </p>
+          <a href="/dashboard.html" class="btn btn-outline-primary btn-sm">Open Feedback Hub →</a>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="card card-hover">
+          <div style="font-size: 2rem; margin-bottom: 1rem; color: #db2777;">4️⃣</div>
+          <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.75rem;">Admin Dashboard</h3>
+          <p style="color: var(--text-muted); font-size: 0.925rem; line-height: 1.6; margin-bottom: 1.25rem;">
+            Full CRUD operations on user feedbacks: Create new entries, Read with filters & search, Update status and response notes, and Delete feedback records.
+          </p>
+          <a href="/admin.html" class="btn btn-outline-primary btn-sm">Open Admin Panel →</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container" style="padding-top:0; padding-bottom:0;">
+      FeedbackApp &copy; 2026. Built according to specifications with complete 4-step workflow.
+    </div>
+  </footer>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+</body>
+</html>

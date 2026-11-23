@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - FeedbackApp</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="navbar-container"></div>
+
+  <main class="container">
+    <!-- Header with Admin Title & Create Button -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <h1 style="font-size: 2rem; font-weight: 800; letter-spacing: -0.02em;">
+            Admin Control Center
+          </h1>
+          <span class="role-tag admin" style="font-size: 0.8rem; padding: 0.25rem 0.75rem;">CRUD Enabled</span>
+        </div>
+        <p style="color: var(--text-muted); font-size: 1rem; margin-top: 0.25rem;">
+          Perform full CRUD operations on all user-submitted feedbacks and manage system reviews.
+        </p>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        <button class="btn btn-secondary btn-sm" onclick="exportFeedbacks('csv')" title="Download CSV">
+          📥 Export CSV
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="exportFeedbacks('json')" title="Download JSON">
+          { } Export JSON
+        </button>
+        <button class="btn btn-primary" onclick="openAdminCreateModal()">
+          <span>➕</span> Add Feedback (Create)
+        </button>
+      </div>
+    </div>
+
+    <!-- Metrics Overview Cards -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div>
+          <div class="metric-title">Total Feedbacks</div>
+          <div id="stat-total" class="metric-value">--</div>
+        </div>
+        <div class="metric-icon" style="background:#e0e7ff; color:var(--primary);">📊</div>
+      </div>
+
+      <div class="metric-card">
+        <div>
+          <div class="metric-title">Average Rating</div>
+          <div id="stat-avg" class="metric-value">--</div>
+        </div>
+        <div class="metric-icon" style="background:#fef3c7; color:#d97706;">⭐</div>
+      </div>
+
+      <div class="metric-card">
+        <div>
+          <div class="metric-title">Pending Review</div>
+          <div id="stat-pending" class="metric-value">--</div>
+        </div>
+        <div class="metric-icon" style="background:#ffedd5; color:#c2410c;">⏳</div>
+      </div>
+
+      <div class="metric-card">
+        <div>
+          <div class="metric-title">Resolved Items</div>
+          <div id="stat-resolved" class="metric-value">--</div>
+        </div>
+        <div class="metric-icon" style="background:#dcfce7; color:#15803d;">✅</div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs: Feedbacks vs Users -->
+    <div style="display: flex; gap: 1rem; border-bottom: 2px solid var(--border-color); margin-bottom: 1.5rem;">
+      <button id="tab-feedbacks-btn" class="btn" style="border-radius: 0; border: none; border-bottom: 3px solid var(--primary); font-weight: 700; color: var(--primary); background: transparent; padding: 0.75rem 1.25rem;" onclick="switchTab('feedbacks')">
+        💬 Feedback Management (CRUD)
+      </button>
+      <button id="tab-users-btn" class="btn" style="border-radius: 0; border: none; font-weight: 600; color: var(--text-muted); background: transparent; padding: 0.75rem 1.25rem;" onclick="switchTab('users')">
+        👥 Registered Users
+      </button>
+    </div>
+
+    <!-- Feedback Management View -->
+    <div id="view-feedbacks">
+      <!-- Filter & Search Toolbar -->
+      <div class="card" style="padding: 1.25rem; margin-bottom: 1.5rem;">
+        <div class="toolbar" style="margin-bottom: 0;">
+          <!-- Search input -->
+          <div style="flex: 1; min-width: 240px;">
+            <input type="text" id="filter-search" class="form-control" placeholder="🔍 Search feedback title, user, or comments..." oninput="debounceFilter()">
+          </div>
+
+          <!-- Dropdown filters -->
+          <div class="filter-group">
+            <select id="filter-status" class="form-select" style="width: auto;" onchange="applyFilters()">
+              <option value="All">All Statuses</option>
+              <option value="Pending">Pending</option>
+              <option value="In Review">In Review</option>
+              <option value="Resolved">Resolved</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+
+            <select id="filter-category" class="form-select" style="width: auto;" onchange="applyFilters()">
+              <option value="All">All Categories</option>
+              <option value="Feature Request">Feature Request</option>
+              <option value="Bug Report">Bug Report</option>
+              <option value="Improvement">Improvement</option>
+              <option value="General Feedback">General Feedback</option>
+            </select>
+
+            <select id="filter-rating" class="form-select" style="width: auto;" onchange="applyFilters()">
+              <option value="All">All Ratings</option>
+              <option value="5">5 Stars</option>
+              <option value="4">4 Stars</option>
+              <option value="3">3 Stars</option>
+              <option value="2">2 Stars</option>
+              <option value="1">1 Star</option>
+            </select>
+
+            <select id="filter-sort" class="form-select" style="width: auto;" onchange="applyFilters()">
+              <option value="newest">Sort: Newest</option>
+              <option value="oldest">Sort: Oldest</option>
+              <option value="rating-desc">Sort: Highest Rating</option>
+              <option value="rating-asc">Sort: Lowest Rating</option>
+            </select>
+
+            <button class="btn btn-secondary btn-sm" onclick="resetFilters()">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feedbacks Table -->
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Category & Title</th>
+              <th>Rating</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th style="text-align: right;">CRUD Actions</th>
+            </tr>
+          </thead>
+          <tbody id="feedback-table-body">
+            <tr>
+              <td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                Loading feedbacks...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Users View Tab -->
+    <div id="view-users" style="display: none;">
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>User ID</th>
+              <th>Full Name</th>
+              <th>Email Address</th>
+              <th>Role</th>
+              <th>Registered At</th>
+            </tr>
+          </thead>
+          <tbody id="user-table-body">
+            <tr>
+              <td colspan="5" style="text-align:center; padding: 2rem;">Loading users...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal: Admin Create / Edit Feedback (CRUD: C & U) -->
+  <div id="admin-crud-modal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="admin-modal-title" class="modal-title">Edit Feedback</h2>
+        <button type="button" class="modal-close" onclick="closeAdminModal()">&times;</button>
+      </div>
+
+      <form id="admin-crud-form">
+        <div class="modal-body">
+          <input type="hidden" id="admin-fb-id">
+
+          <!-- User details (shown for create or read-only on edit) -->
+          <div id="admin-user-fields" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label" for="admin-fb-username">User Name</label>
+              <input type="text" id="admin-fb-username" class="form-control" placeholder="Aditya Shinde">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="admin-fb-email">User Email</label>
+              <input type="email" id="admin-fb-email" class="form-control" placeholder="aditya.shinde@example.com">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="admin-fb-title">Title *</label>
+            <input type="text" id="admin-fb-title" class="form-control" required placeholder="Feedback headline by Aditya Shinde">
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label" for="admin-fb-category">Category</label>
+              <select id="admin-fb-category" class="form-select">
+                <option value="Feature Request">Feature Request</option>
+                <option value="Bug Report">Bug Report</option>
+                <option value="Improvement">Improvement</option>
+                <option value="General Feedback">General Feedback</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="admin-fb-rating">Rating (1-5)</label>
+              <select id="admin-fb-rating" class="form-select">
+                <option value="5">5 - Excellent</option>
+                <option value="4">4 - Very Good</option>
+                <option value="3">3 - Good</option>
+                <option value="2">2 - Fair</option>
+                <option value="1">1 - Poor</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="admin-fb-priority">Priority</label>
+              <select id="admin-fb-priority" class="form-select">
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="admin-fb-status">Resolution Status</label>
+            <select id="admin-fb-status" class="form-select">
+              <option value="Pending">Pending</option>
+              <option value="In Review">In Review</option>
+              <option value="Resolved">Resolved</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="admin-fb-comments">User Comments / Description *</label>
+            <textarea id="admin-fb-comments" class="form-control" rows="3" required></textarea>
+          </div>
+
+          <div class="form-group" style="background:#f0f9ff; border:1px solid #bae6fd; padding:1rem; border-radius:var(--radius-md);">
+            <label class="form-label" for="admin-fb-response" style="color:#0369a1;">
+              🛡️ Official Admin Response / Resolution Notes
+            </label>
+            <textarea id="admin-fb-response" class="form-control" rows="2" placeholder="Official reply by Admin Aditya Shinde..."></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeAdminModal()">Cancel</button>
+          <button type="submit" id="admin-btn-save" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: View Details (CRUD: R) -->
+  <div id="admin-view-modal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Feedback Details</h2>
+        <button type="button" class="modal-close" onclick="closeViewModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="view-modal-content">
+        <!-- Injected dynamically -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeViewModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container" style="padding-top:0; padding-bottom:0;">
+      FeedbackApp &copy; 2026. Step 4: Admin Dashboard with full CRUD capabilities.
+    </div>
+  </footer>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/admin-dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+# Compiled backend files
+backend/target/
+*.class
+*.log
+
+# Frontend dependencies and build outputs
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# IDE and Editor files
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+
+# OS files
+Thumbs.db
+.DS_Store

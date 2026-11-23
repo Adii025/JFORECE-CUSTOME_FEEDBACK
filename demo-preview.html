@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Feedback System - Instant Interactive Preview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const INITIAL_USERS = [
+      { id: 1, username: 'admin', email: 'admin@feedback.com', password: 'admin123', fullName: 'System Administrator', role: 'ADMIN' }
+    ];
+
+    const INITIAL_FEEDBACKS = [];
+
+    const CATEGORIES = ['UI/UX', 'Performance', 'Bug Report', 'Feature Request', 'Customer Support', 'General'];
+
+    function App() {
+      const [users, setUsers] = useState(INITIAL_USERS);
+      const [feedbacks, setFeedbacks] = useState(INITIAL_FEEDBACKS);
+      const [currentUser, setCurrentUser] = useState(null); // Clean state so you register yourself
+      const [currentView, setCurrentView] = useState('login'); // 'login', 'register', 'feedback', 'admin'
+      
+      // Feedback Form
+      const [editingId, setEditingId] = useState(null);
+      const [formState, setFormState] = useState({ title: '', category: 'UI/UX', rating: 5, comments: '' });
+
+      // Admin CRUD
+      const [searchQuery, setSearchQuery] = useState('');
+      const [adminFilterCat, setAdminFilterCat] = useState('ALL');
+      const [adminFilterStatus, setAdminFilterStatus] = useState('ALL');
+      const [adminEditingItem, setAdminEditingItem] = useState(null);
+      const [showAdminCreate, setShowAdminCreate] = useState(false);
+      const [adminCreateForm, setAdminCreateForm] = useState({ title: '', category: 'UI/UX', rating: 5, comments: '', status: 'PENDING', adminRemarks: '' });
+
+      // Login / Register state
+      const [loginIdent, setLoginIdent] = useState('');
+      const [loginPass, setLoginPass] = useState('');
+      const [loginErr, setLoginErr] = useState('');
+      const [regForm, setRegForm] = useState({ username: '', email: '', password: '', fullName: '', role: 'USER' });
+      const [regErr, setRegErr] = useState('');
+      const [toast, setToast] = useState('');
+
+      const showNotification = (msg) => {
+        setToast(msg);
+        setTimeout(() => setToast(''), 3000);
+      };
+
+      const API_URL = 'http://localhost:8081/api';
+
+      // Load live from PostgreSQL / Spring Boot if running
+      useEffect(() => {
+        fetch(`${API_URL}/admin/feedback`)
+          .then(res => res.ok ? res.json() : [])
+          .then(data => { if (Array.isArray(data) && data.length > 0) setFeedbacks(data); })
+          .catch(() => {});
+      }, []);
+
+      const handleLogin = async (e) => {
+        e.preventDefault();
+        setLoginErr('');
+        try {
+          const res = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usernameOrEmail: loginIdent, password: loginPass })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setCurrentUser(data.user);
+            setCurrentView(data.user.role === 'ADMIN' ? 'admin' : 'feedback');
+            showNotification(`Welcome, ${data.user.fullName}! (Connected to PostgreSQL)`);
+            return;
+          }
+        } catch (err) {
+          console.warn('Backend offline, checking local preview state:', err);
+        }
+
+        const user = users.find(u => (u.username.toLowerCase() === loginIdent.toLowerCase() || u.email.toLowerCase() === loginIdent.toLowerCase()) && u.password === loginPass);
+        if (!user) {
+          setLoginErr('Invalid credentials. (Note: To save to PostgreSQL, run: cd backend; mvn spring-boot:run)');
+          return;
+        }
+        setCurrentUser(user);
+        setCurrentView(user.role === 'ADMIN' ? 'admin' : 'feedback');
+        showNotification(`Welcome, ${user.fullName}!`);
+      };
+
+      const handleRegister = async (e) => {
+        e.preventDefault();
+        setRegErr('');
+        let registeredUser = null;
+
+        // 1. Try sending directly to Spring Boot & PostgreSQL
+        try {
+          const res = await fetch(`${API_URL}/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(regForm)
+          });
+          if (res.ok) {
+            const data = await res.json();
+            registeredUser = data.user;
+            showNotification('Saved directly to PostgreSQL Database!');
+          } else {
+            const errData = await res.json();
+            setRegErr(errData.message || 'Registration failed in PostgreSQL');
+            return;
+          }
+        } catch (err) {
+          console.warn('Spring Boot backend is not running. Falling back to local state:', err);
+          alert('⚠️ Warning: Spring Boot backend is NOT running on port 8080.\n\nTo make your users visible in PostgreSQL, run:\ncd backend\nmvn spring-boot:run\n\nSaving only to temporary browser view for now.');
+        }
+
+        if (!registeredUser) {
+          if (users.some(u => u.username.toLowerCase() === regForm.username.toLowerCase())) {
+            setRegErr('Username already taken');
+            return;
+          }
+          registeredUser = { id: Date.now(), ...regForm };
+        }
+
+        setUsers([...users, registeredUser]);
+        setCurrentUser(registeredUser);
+        setCurrentView(registeredUser.role === 'ADMIN' ? 'admin' : 'feedback');
+      };
+
+      const handleSaveFeedback = async (e) => {
+        e.preventDefault();
+        if (editingId) {
+          try {
+            await fetch(`${API_URL}/feedback/${editingId}?userId=${currentUser.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(formState)
+            });
+          } catch (err) { console.warn(err); }
+          setFeedbacks(feedbacks.map(f => f.id === editingId ? { ...f, ...formState } : f));
+          setEditingId(null);
+          showNotification('Feedback successfully updated!');
+        } else {
+          let savedFb = null;
+          try {
+            const res = await fetch(`${API_URL}/feedback?userId=${currentUser.id}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                ...formState,
+                userId: currentUser.id,
+                username: currentUser.username,
+                userFullName: currentUser.fullName
+              })
+            });
+            if (res.ok) {
+              savedFb = await res.json();
+              showNotification('Saved directly to PostgreSQL feedbacks table!');
+            }
+          } catch (err) {
+            alert('⚠️ Warning: Spring Boot backend is NOT running on port 8080.\nTo save to PostgreSQL, run:\ncd backend\nmvn spring-boot:run');
+          }
+
+          if (!savedFb) {
+            savedFb = {
+              id: Date.now(),
+              userId: currentUser.id,
+              username: currentUser.username,
+              userFullName: currentUser.fullName,
+              ...formState,
+              status: 'PENDING',
+              adminRemarks: null,
+              createdAt: new Date().toISOString()
+            };
+          }
+          setFeedbacks([savedFb, ...feedbacks]);
+        }
+        setFormState({ title: '', category: 'UI/UX', rating: 5, comments: '' });
+      };
+
+      const handleAdminUpdate = (e) => {
+        e.preventDefault();
+        setFeedbacks(feedbacks.map(f => f.id === adminEditingItem.id ? adminEditingItem : f));
+        setAdminEditingItem(null);
+        showNotification('Admin changes saved!');
+      };
+
+      const handleAdminDelete = (id) => {
+        if (confirm(`Delete feedback #${id}?`)) {
+          setFeedbacks(feedbacks.filter(f => f.id !== id));
+          showNotification('Feedback deleted.');
+        }
+      };
+
+      const userFeedbacks = feedbacks.filter(f => f.userId === currentUser?.id);
+
+      const filteredFeedbacks = feedbacks.filter(f => {
+        if (adminFilterCat !== 'ALL' && f.category !== adminFilterCat) return false;
+        if (adminFilterStatus !== 'ALL' && f.status !== adminFilterStatus) return false;
+        if (searchQuery) {
+          const q = searchQuery.toLowerCase();
+          return f.title.toLowerCase().includes(q) || f.comments.toLowerCase().includes(q) || f.userFullName.toLowerCase().includes(q);
+        }
+        return true;
+      });
+
+      const avgRating = feedbacks.length ? (feedbacks.reduce((a, b) => a + b.rating, 0) / feedbacks.length).toFixed(1) : 0;
+
+      return (
+        <div className="min-h-screen flex flex-col">
+          {/* Top Navbar */}
+          <nav className="bg-white border-b border-slate-200 px-6 py-3.5 flex justify-between items-center shadow-sm">
+            <div className="flex items-center space-x-3">
+              <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-lg">
+                F
+              </div>
+              <div>
+                <span className="font-extrabold text-lg text-slate-900">FeedbackHub</span>
+                <span className="ml-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                  Interactive Demo
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              {currentUser && (
+                <div className="text-right text-xs mr-2">
+                  <div className="font-bold text-slate-800">{currentUser.fullName}</div>
+                  <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700">{currentUser.role}</span>
+                </div>
+              )}
+              {currentUser ? (
+                <button
+                  onClick={() => { setCurrentUser(null); setCurrentView('login'); }}
+                  className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 font-medium text-slate-600"
+                >
+                  Sign Out
+                </button>
+              ) : (
+                <button
+                  onClick={() => setCurrentView('login')}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-semibold"
+                >
+                  Sign In
+                </button>
+              )}
+            </div>
+          </nav>
+
+          {/* Quick Steps Bar */}
+          <div className="bg-slate-100 border-b border-slate-200 px-6 py-2 flex items-center justify-between text-xs overflow-x-auto">
+            <span className="font-bold text-slate-500 uppercase tracking-wider">Switch Task Step:</span>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setCurrentView('login')}
+                className={`px-3 py-1 rounded-full font-semibold transition ${currentView === 'login' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-700 hover:bg-slate-200'}`}
+              >
+                1. Login
+              </button>
+              <button
+                onClick={() => setCurrentView('register')}
+                className={`px-3 py-1 rounded-full font-semibold transition ${currentView === 'register' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-700 hover:bg-slate-200'}`}
+              >
+                2. Registration
+              </button>
+              <button
+                onClick={() => {
+                  if (!currentUser) setCurrentUser(INITIAL_USERS[1]);
+                  setCurrentView('feedback');
+                }}
+                className={`px-3 py-1 rounded-full font-semibold transition ${currentView === 'feedback' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-700 hover:bg-slate-200'}`}
+              >
+                3. User Feedback & Summary
+              </button>
+              <button
+                onClick={() => {
+                  if (!currentUser || currentUser.role !== 'ADMIN') setCurrentUser(INITIAL_USERS[0]);
+                  setCurrentView('admin');
+                }}
+                className={`px-3 py-1 rounded-full font-semibold transition ${currentView === 'admin' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-700 hover:bg-slate-200'}`}
+              >
+                4. Admin Dashboard (CRUD)
+              </button>
+            </div>
+          </div>
+
+          {/* Toast */}
+          {toast && (
+            <div className="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-lg text-sm font-semibold">
+              {toast}
+            </div>
+          )}
+
+          {/* Main Views */}
+          <div className="flex-1 max-w-6xl w-full mx-auto p-6">
+
+            {/* STEP 1: LOGIN */}
+            {currentView === 'login' && (
+              <div className="max-w-md mx-auto bg-white rounded-2xl shadow-lg border border-slate-200 p-8 my-8">
+                <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">Step 1: User Login</span>
+                <h2 className="text-2xl font-bold text-slate-900 mt-2">Sign in to your account</h2>
+                {loginErr && <div className="mt-3 p-3 bg-rose-50 text-rose-700 text-xs rounded-xl">{loginErr}</div>}
+                <form onSubmit={handleLogin} className="mt-4 space-y-4">
+                  <div>
+                    <label className="text-xs font-bold text-slate-600">Username or Email</label>
+                    <input className="w-full mt-1 px-3 py-2 border rounded-xl text-sm" value={loginIdent} onChange={e => setLoginIdent(e.target.value)} required placeholder="aditya_shinde or admin" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-600">Password</label>
+                    <input className="w-full mt-1 px-3 py-2 border rounded-xl text-sm" type="password" value={loginPass} onChange={e => setLoginPass(e.target.value)} required placeholder="••••••••" />
+                  </div>
+                  <button type="submit" className="w-full py-2.5 bg-indigo-600 text-white font-bold rounded-xl text-sm hover:bg-indigo-700">Sign In</button>
+                </form>
+                <div className="mt-6 pt-4 border-t border-slate-100">
+                  <button onClick={() => { setLoginIdent('admin'); setLoginPass('admin123'); }} className="w-full text-xs px-2.5 py-2 border border-indigo-200 bg-indigo-50 text-indigo-700 font-bold rounded-lg hover:bg-indigo-100">👑 Fill Default Admin (admin / admin123)</button>
+                  <p className="text-[11px] text-slate-400 text-center mt-2">New users: Please register on Step 2.</p>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 2: REGISTRATION */}
+            {currentView === 'register' && (
+              <div className="max-w-md mx-auto bg-white rounded-2xl shadow-lg border border-slate-200 p-8 my-8">
+                <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">Step 2: Registration Page</span>
+                <h2 className="text-2xl font-bold text-slate-900 mt-2">Create New Account</h2>
+                {regErr && <div className="mt-3 p-3 bg-rose-50 text-rose-700 text-xs rounded-xl">{regErr}</div>}
+                <form onSubmit={handleRegister} className="mt-4 space-y-3">
+                  <div>
+                    <label className="text-xs font-bold text-slate-600">Full Name</label>
+                    <input className="w-full mt-1 px-3 py-2 border rounded-xl text-sm" value={regForm.fullName} onChange={e => setRegForm({...regForm, fullName: e.target.value})} required placeholder="e.g. Aditya Shinde" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-600">Username</label>
+                    <input className="w-full mt-1 px-3 py-2 border rounded-xl text-sm" value={regForm.username} onChange={e => setRegForm({...regForm, username: e.target.value})} required placeholder="aditya_shinde" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-600">Email</label>
+                    <input className="w-full mt-1 px-3 py-2 border rounded-xl text-sm" type="email" value={regForm.email} onChange={e => setRegForm({...regForm, email: e.target.value})} required placeholder="aditya.shinde@example.com" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-600">Password</label>
+                    <input className="w-full mt-1 px-3 py-2 border rounded-xl text-sm" type="password" value={regForm.password} onChange={e => setRegForm({...regForm, password: e.target.value})} required placeholder="••••••••" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-600">Role</label>
+                    <select className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-white" value={regForm.role} onChange={e => setRegForm({...regForm, role: e.target.value})}>
+                      <option value="USER">User</option>
+                      <option value="ADMIN">Admin</option>
+                    </select>
+                  </div>
+                  <button type="submit" className="w-full py-2.5 bg-indigo-600 text-white font-bold rounded-xl text-sm hover:bg-indigo-700">Register</button>
+                </form>
+              </div>
+            )}
+
+            {/* STEP 3: USER FEEDBACK (Summary, View Past, Edit, Add) */}
+            {currentView === 'feedback' && (
+              <div>
+                <div className="bg-indigo-600 text-white p-6 rounded-3xl mb-6 shadow-md flex justify-between items-center">
+                  <div>
+                    <span className="text-xs font-bold uppercase tracking-wider bg-white/20 px-2.5 py-0.5 rounded-full">Steps 1 & 3: User Feedback Hub</span>
+                    <h1 className="text-2xl font-extrabold mt-2">Welcome, {currentUser?.fullName || 'User'}</h1>
+                    <p className="text-xs text-indigo-100 mt-1">Review your submitted feedback, edit responses, or submit a new suggestion.</p>
+                  </div>
+                  <div className="text-right bg-white/10 p-3 rounded-2xl">
+                    <div className="text-2xl font-bold">{userFeedbacks.length}</div>
+                    <div className="text-[11px] text-indigo-200">Your Feedbacks</div>
+                  </div>
+                </div>
+
+                {/* Form to Add or Edit */}
+                <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-8 shadow-sm">
+                  <div className="flex justify-between items-center mb-4 pb-2 border-b">
+                    <h3 className="font-bold text-base text-slate-900">{editingId ? `Editing Feedback #${editingId}` : 'Submit New Feedback'}</h3>
+                    {editingId && (
+                      <button onClick={() => { setEditingId(null); setFormState({ title: '', category: 'UI/UX', rating: 5, comments: '' }); }} className="text-xs text-slate-500 hover:text-slate-800">
+                        Cancel Edit
+                      </button>
+                    )}
+                  </div>
+                  <form onSubmit={handleSaveFeedback} className="space-y-4">
+                    <div>
+                      <label className="text-xs font-bold text-slate-600">Title / Subject *</label>
+                      <input className="w-full mt-1 px-3 py-2 border rounded-xl text-sm" value={formState.title} onChange={e => setFormState({...formState, title: e.target.value})} required placeholder="e.g. Feedback by Aditya Shinde: Mobile navigation feels smooth" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-bold text-slate-600">Category</label>
+                        <select className="w-full mt-1 px-3 py-2 border rounded-xl text-sm bg-white" value={formState.category} onChange={e => setFormState({...formState, category: e.target.value})}>
+                          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-slate-600">Rating ({formState.rating} / 5 Stars)</label>
+                        <div className="flex space-x-1 mt-1">
+                          {[1,2,3,4,5].map(st => (
+                            <button key={st} type="button" onClick={() => setFormState({...formState, rating: st})} className="text-xl">
+                              {st <= formState.rating ? '⭐' : '☆'}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-slate-600">Comments *</label>
+                      <textarea rows="3" className="w-full mt-1 px-3 py-2 border rounded-xl text-sm" value={formState.comments} onChange={e => setFormState({...formState, comments: e.target.value})} required placeholder="Detailed feedback by Aditya Shinde: Describe your suggestion or compliments..."></textarea>
+                    </div>
+                    <button type="submit" className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm shadow-sm">
+                      {editingId ? 'Save & Update Feedback' : 'Submit Feedback'}
+                    </button>
+                  </form>
+                </div>
+
+                {/* Submissions List */}
+                <h3 className="text-lg font-bold text-slate-900 mb-3">Your Previously Submitted Feedback ({userFeedbacks.length})</h3>
+                {userFeedbacks.length === 0 ? (
+                  <div className="bg-white p-8 rounded-2xl text-center border text-slate-500 text-sm">You haven't submitted any feedback yet. Use the form above to add one!</div>
+                ) : (
+                  <div className="space-y-4">
+                    {userFeedbacks.map(fb => (
+                      <div key={fb.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                        <div>
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 uppercase">{fb.category}</span>
+                            <span className="text-xs font-bold text-amber-500">{'★'.repeat(fb.rating)}</span>
+                          </div>
+                          <h4 className="font-bold text-base text-slate-900 mt-1">{fb.title}</h4>
+                          <p className="text-sm text-slate-600 mt-1">{fb.comments}</p>
+                          {fb.adminRemarks && (
+                            <div className="mt-3 p-2 bg-indigo-50 border border-indigo-100 rounded-lg text-xs text-indigo-800">
+                              <strong>Admin Reply:</strong> {fb.adminRemarks}
+                            </div>
+                          )}
+                        </div>
+                        <div className="mt-4 pt-3 border-t flex justify-between items-center text-xs text-slate-400">
+                          <span>Status: <strong className="text-slate-700">{fb.status}</strong></span>
+                          <button
+                            onClick={() => {
+                              setEditingId(fb.id);
+                              setFormState({ title: fb.title, category: fb.category, rating: fb.rating, comments: fb.comments });
+                              window.scrollTo({ top: 120, behavior: 'smooth' });
+                            }}
+                            className="font-bold text-indigo-600 hover:text-indigo-800"
+                          >
+                            ✏️ Edit Feedback
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* STEP 4: ADMIN DASHBOARD (CRUD) */}
+            {currentView === 'admin' && (
+              <div>
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <span className="text-xs font-bold uppercase tracking-wider bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded">Step 4: Admin CRUD Dashboard</span>
+                    <h1 className="text-2xl font-extrabold text-slate-900 mt-1">Admin Feedback Control</h1>
+                  </div>
+                  <button onClick={() => setShowAdminCreate(true)} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-sm">
+                    + Log New Feedback
+                  </button>
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-4 gap-4 mb-6">
+                  <div className="bg-white p-4 rounded-2xl border shadow-sm">
+                    <div className="text-xs font-bold text-slate-400 uppercase">Total</div>
+                    <div className="text-2xl font-extrabold mt-1">{feedbacks.length}</div>
+                  </div>
+                  <div className="bg-white p-4 rounded-2xl border shadow-sm">
+                    <div className="text-xs font-bold text-slate-400 uppercase">Avg Rating</div>
+                    <div className="text-2xl font-extrabold text-amber-500 mt-1">{avgRating} / 5</div>
+                  </div>
+                  <div className="bg-white p-4 rounded-2xl border shadow-sm">
+                    <div className="text-xs font-bold text-slate-400 uppercase">Pending</div>
+                    <div className="text-2xl font-extrabold text-blue-600 mt-1">{feedbacks.filter(f => f.status === 'PENDING').length}</div>
+                  </div>
+                  <div className="bg-white p-4 rounded-2xl border shadow-sm">
+                    <div className="text-xs font-bold text-slate-400 uppercase">Resolved</div>
+                    <div className="text-2xl font-extrabold text-emerald-600 mt-1">{feedbacks.filter(f => f.status === 'RESOLVED').length}</div>
+                  </div>
+                </div>
+
+                {/* Search & Filters */}
+                <div className="bg-white p-3 rounded-2xl border mb-6 flex gap-3 text-xs">
+                  <input className="px-3 py-1.5 border rounded-lg flex-1" placeholder="Search Aditya Shinde, title, or user..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                  <select className="px-3 py-1.5 border rounded-lg bg-white" value={adminFilterCat} onChange={e => setAdminFilterCat(e.target.value)}>
+                    <option value="ALL">All Categories</option>
+                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  <select className="px-3 py-1.5 border rounded-lg bg-white" value={adminFilterStatus} onChange={e => setAdminFilterStatus(e.target.value)}>
+                    <option value="ALL">All Statuses</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="IN_REVIEW">In Review</option>
+                    <option value="RESOLVED">Resolved</option>
+                    <option value="REJECTED">Rejected</option>
+                  </select>
+                </div>
+
+                {/* CRUD Table */}
+                <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+                  <table className="min-w-full text-left text-xs divide-y">
+                    <thead className="bg-slate-50 font-bold text-slate-600 uppercase">
+                      <tr>
+                        <th className="px-4 py-3">User</th>
+                        <th className="px-4 py-3">Feedback Details</th>
+                        <th className="px-4 py-3">Rating</th>
+                        <th className="px-4 py-3">Status</th>
+                        <th className="px-4 py-3 text-right">Actions (CRUD)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {filteredFeedbacks.map(fb => (
+                        <tr key={fb.id} className="hover:bg-slate-50">
+                          <td className="px-4 py-3 font-semibold">{fb.userFullName}</td>
+                          <td className="px-4 py-3">
+                            <span className="font-bold text-slate-800">{fb.title}</span>
+                            <p className="text-slate-500 mt-0.5">{fb.comments}</p>
+                            {fb.adminRemarks && <span className="text-[10px] text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded mt-1 inline-block">Reply: {fb.adminRemarks}</span>}
+                          </td>
+                          <td className="px-4 py-3 font-bold text-amber-500">{fb.rating} ★</td>
+                          <td className="px-4 py-3"><span className="px-2 py-0.5 rounded font-bold text-[10px] bg-slate-100">{fb.status}</span></td>
+                          <td className="px-4 py-3 text-right space-x-2">
+                            <button onClick={() => setAdminEditingItem({...fb})} className="px-2.5 py-1 rounded bg-indigo-50 text-indigo-700 font-bold">Edit (U)</button>
+                            <button onClick={() => handleAdminDelete(fb.id)} className="px-2.5 py-1 rounded bg-rose-50 text-rose-600 font-bold">Delete (D)</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Edit Modal */}
+                {adminEditingItem && (
+                  <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
+                      <h3 className="font-bold text-base mb-3">Admin Edit Feedback #{adminEditingItem.id}</h3>
+                      <form onSubmit={handleAdminUpdate} className="space-y-3 text-xs">
+                        <div>
+                          <label className="font-bold">Title</label>
+                          <input className="w-full mt-1 px-3 py-1.5 border rounded-lg" value={adminEditingItem.title} onChange={e => setAdminEditingItem({...adminEditingItem, title: e.target.value})} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="font-bold">Status</label>
+                            <select className="w-full mt-1 px-3 py-1.5 border rounded-lg bg-white" value={adminEditingItem.status} onChange={e => setAdminEditingItem({...adminEditingItem, status: e.target.value})}>
+                              <option value="PENDING">PENDING</option>
+                              <option value="IN_REVIEW">IN_REVIEW</option>
+                              <option value="RESOLVED">RESOLVED</option>
+                              <option value="REJECTED">REJECTED</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="font-bold">Rating</label>
+                            <select className="w-full mt-1 px-3 py-1.5 border rounded-lg bg-white" value={adminEditingItem.rating} onChange={e => setAdminEditingItem({...adminEditingItem, rating: Number(e.target.value)})}>
+                              {[1,2,3,4,5].map(n => <option key={n} value={n}>{n} Stars</option>)}
+                            </select>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="font-bold">Admin Reply / Remarks</label>
+                          <textarea rows="2" className="w-full mt-1 px-3 py-1.5 border rounded-lg" value={adminEditingItem.adminRemarks || ''} onChange={e => setAdminEditingItem({...adminEditingItem, adminRemarks: e.target.value})} placeholder="Response by Admin Aditya Shinde for user..."></textarea>
+                        </div>
+                        <div className="flex justify-end space-x-2 pt-2">
+                          <button type="button" onClick={() => setAdminEditingItem(null)} className="px-3 py-1.5 border rounded-lg">Cancel</button>
+                          <button type="submit" className="px-4 py-1.5 bg-indigo-600 text-white rounded-lg font-bold">Save</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                )}
+
+                {/* Create Modal */}
+                {showAdminCreate && (
+                  <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
+                      <h3 className="font-bold text-base mb-3">Admin Create Feedback Record (C)</h3>
+                      <form onSubmit={(e) => {
+                        e.preventDefault();
+                        const newItem = { id: Date.now(), userId: 1, username: 'admin', userFullName: 'Admin Direct Log', ...adminCreateForm, createdAt: new Date().toISOString() };
+                        setFeedbacks([newItem, ...feedbacks]);
+                        setShowAdminCreate(false);
+                        showNotification('New feedback created by Admin!');
+                      }} className="space-y-3 text-xs">
+                        <div>
+                          <label className="font-bold">Title</label>
+                          <input className="w-full mt-1 px-3 py-1.5 border rounded-lg" value={adminCreateForm.title} onChange={e => setAdminCreateForm({...adminCreateForm, title: e.target.value})} required />
+                        </div>
+                        <div>
+                          <label className="font-bold">Comments</label>
+                          <textarea rows="2" className="w-full mt-1 px-3 py-1.5 border rounded-lg" value={adminCreateForm.comments} onChange={e => setAdminCreateForm({...adminCreateForm, comments: e.target.value})} required></textarea>
+                        </div>
+                        <div className="flex justify-end space-x-2 pt-2">
+                          <button type="button" onClick={() => setShowAdminCreate(false)} className="px-3 py-1.5 border rounded-lg">Cancel</button>
+                          <button type="submit" className="px-4 py-1.5 bg-indigo-600 text-white rounded-lg font-bold">Create</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
